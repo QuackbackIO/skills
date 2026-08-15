@@ -9,7 +9,7 @@ description: >-
 
 # Install the Quackback widget
 
-Follow these steps IN ORDER. Do not invent APIs.
+Follow these steps IN ORDER. Do not invent APIs. Make the smallest change that works — add alongside existing code, do not restructure the host app.
 
 Credentials come from the user or from Admin → Settings → Widget → Install:
 
@@ -20,13 +20,13 @@ If either value is missing, ask once, then continue.
 
 ## STEP 1: Detect the stack
 
-Look at dependency and lock files (`package.json`, `pnpm-lock.yaml`, `bun.lock`, `Gemfile`, `composer.json`, `requirements.txt`, `go.mod`, …) to choose the package manager and where layout / auth live.
+Look at dependency and lock files (`package.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `Gemfile`, `composer.json`, `requirements.txt`, `go.mod`, …) to choose the package manager and where root layout / auth live.
 
-If Quackback is already installed and initialized, do not rewrite it. Add only what is missing (usually identify).
+If Quackback is already installed and initialized, do not rewrite it. Skip to STEP 3 and add only what is missing (usually identify).
 
 ## STEP 2: Load the widget
 
-Pick the path that matches the repo.
+Initialize once, in the root layout / app shell — the same place other third-party scripts load. Not on a single page.
 
 **HTML / any site** — paste before `</body>`:
 
@@ -43,7 +43,7 @@ Pick the path that matches the repo.
 
 Replace `INSTANCE_URL` with the workspace URL, no trailing slash.
 
-**SPA (React, Next, Vue, Svelte, …)** — the snippet or `npm install @quackback/widget` both work. Prefer the approach that already exists in the repo.
+**SPA** — the snippet or the npm package both work. Prefer the approach that already exists. If you add the package, use the repo's package manager (`npm install` / `pnpm add` / `bun add` / `yarn add`). Do not hand-edit `package.json`.
 
 ```js
 import { Quackback } from '@quackback/widget'
@@ -60,21 +60,25 @@ Read [references/identify-users.md](references/identify-users.md) now. Then impl
 Identify is required for signed-in users. Anonymous visitors need no identify call.
 
 1. Add a **server-only** route that reads the host session, signs a short-lived HS256 JWT with `QUACKBACK_WIDGET_SECRET`, and returns `{ ssoToken }`.
-2. Call identify as soon as the host knows who the user is: after login, after signup, and on every authenticated page load.
-3. Call `Quackback("logout")` from the host logout handler.
+2. Call identify as soon as the host knows who the user is: when the app first loads if they are already signed in, and immediately after login or signup. Once per session — not on every client navigation.
+3. If the user is already known at init time, pass `{ ssoToken }` as `identity` on `init` instead of a separate identify call.
+4. Call `Quackback("logout")` from the host logout handler. Always, even if you do not expect a shared computer.
 
 Do not call `Quackback("identify", { id, email })`. That unverified shape is rejected.
 
-## STEP 4: Store the secret
+## STEP 4: Store credentials
 
-Put `QUACKBACK_WIDGET_SECRET` in `.env` / `.env.local` or the host secret store. Reference it only from server code. Never put it in `NEXT_PUBLIC_*`, `VITE_*`, or the snippet.
+If valid values already exist in `.env` / `.env.local`, leave them. Otherwise write:
 
-If the instance URL is needed on the client, a public env var for the URL alone is fine.
+- `QUACKBACK_WIDGET_SECRET` — server-only
+- A public env var for the instance URL if the client needs it (`NEXT_PUBLIC_*` / `VITE_*` for the URL only)
+
+Never put the secret in public env vars, the snippet, or client bundles.
 
 ## STEP 5: Verify
 
 - Widget launcher appears on a logged-out page.
-- After login, the server route returns `{ ssoToken }` and the client calls `Quackback("identify", { ssoToken })`.
+- After login (or on an already-authenticated load), the server route returns `{ ssoToken }` and the client identifies once.
 - Logout clears identity; the launcher stays.
 - Secret is not in the client bundle.
 
