@@ -1,0 +1,7 @@
+{
+  "name": "install-widget",
+  "description": "Install the Quackback widget in a host app and identify signed-in users with a verified token.",
+  "version": "1.0.0",
+  "author": { "name": "Quackback" },
+  "keywords": ["quackback", "widget", "install", "identify"]
+}

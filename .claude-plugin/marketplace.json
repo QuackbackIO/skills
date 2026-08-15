@@ -1,0 +1,17 @@
+{
+  "name": "quackback-skills",
+  "owner": {
+    "name": "Quackback"
+  },
+  "metadata": {
+    "description": "Quackback skills for coding agents — start with installing the widget"
+  },
+  "plugins": [
+    {
+      "name": "install-widget",
+      "source": "./skills/quackback/install-widget",
+      "description": "Install the Quackback widget in a host app and identify signed-in users with a verified token.",
+      "keywords": ["quackback", "widget", "install", "identify"]
+    }
+  ]
+}
