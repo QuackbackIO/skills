@@ -1,8 +1,10 @@
 # Identify users
 
-The widget works anonymously after `init`. Identify links that anonymous session to a real customer as soon as the host app knows who they are.
+The widget works anonymously after `init`. Identify is optional. Use it when the user wants signed-in activity to attach to a real customer.
 
-Anonymous activity from before login moves onto the identified user automatically. Do not wait for the user to open the widget. Do not skip identify because the launcher already appears.
+If the user did not provide a signing secret from Admin → Settings → Widget → Install, do not implement identify and do not invent a secret.
+
+Anonymous activity from before login moves onto the identified user automatically. Do not wait for the user to open the widget.
 
 ## When to identify
 
@@ -25,7 +27,7 @@ Quackback('init', { identity: { ssoToken } })
 
 Identify is verified-only. The browser must not pass raw `id` or `email`.
 
-Your backend signs an HS256 JWT with `QUACKBACK_WIDGET_SECRET` and returns `{ ssoToken }`.
+Your backend signs an HS256 JWT with the signing secret from Admin → Settings → Widget → Install and returns `{ ssoToken }`. Store that secret in the host app server-side secret store (example: `WIDGET_SIGNING_SECRET`). It is not a Quackback Cloud or self-host environment variable.
 
 | Claim | Required | Role |
 | --- | --- | --- |
@@ -45,7 +47,7 @@ Reuse the host session. Return 401 when nobody is signed in — the client then 
 ```ts
 import { SignJWT } from 'jose'
 
-const secret = new TextEncoder().encode(process.env.QUACKBACK_WIDGET_SECRET)
+const secret = new TextEncoder().encode(process.env.WIDGET_SIGNING_SECRET)
 
 export async function GET(request: Request) {
   const user = await getCurrentUser(request) // host session helper
@@ -92,9 +94,10 @@ The launcher stays. A later identify replaces the previous identity; still call 
 
 ## Do not
 
-- Put `QUACKBACK_WIDGET_SECRET` in client code.
+- Put the signing secret in client code.
 - Call `Quackback("identify", { id, email })`.
 - Use email, `null`, or a generic string as `sub`.
 - Identify on every route change.
 - Identify only at signup and never again on later visits — call it on each authenticated app load.
 - Invent a second identity API.
+- Invent a signing secret or look for a Quackback `QUACKBACK_WIDGET_SECRET` environment variable.

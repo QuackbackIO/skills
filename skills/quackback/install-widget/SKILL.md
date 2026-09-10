@@ -1,9 +1,9 @@
 ---
 name: install-widget
 description: >-
-  Install the Quackback widget in a host application and identify signed-in
-  users with a verified token. Use when setting up Quackback, adding the
-  feedback or messenger widget, wiring Quackback("init"), or implementing
+  Install the Quackback widget in a host application and optionally identify
+  signed-in users with a verified token. Use when setting up Quackback, adding
+  the feedback or messenger widget, wiring Quackback("init"), or implementing
   Quackback identify / ssoToken / logout.
 ---
 
@@ -14,15 +14,15 @@ Follow these steps IN ORDER. Do not invent APIs. Make the smallest change that w
 Credentials come from the user or from Admin → Settings → Widget → Install:
 
 - Instance URL (example: `https://feedback.example.com`)
-- `QUACKBACK_WIDGET_SECRET` — server-only. Never commit it or ship it to the browser.
+- Signing secret (optional) — only if the user wants signed-in identify. Server-only. Never commit it or ship it to the browser.
 
-If either value is missing, ask once, then continue.
+The launcher does not need a signing secret. If the user did not give a signing secret, finish after `init` and do not invent one. Do not treat a missing secret as a Quackback Cloud or self-host environment variable.
 
 ## STEP 1: Detect the stack
 
 Look at dependency and lock files (`package.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `Gemfile`, `composer.json`, `requirements.txt`, `go.mod`, …) to choose the package manager and where root layout / auth live.
 
-If Quackback is already installed and initialized, do not rewrite it. Skip to STEP 3 and add only what is missing (usually identify).
+If Quackback is already installed and initialized, do not rewrite it. Skip to STEP 3 only if the user provided a signing secret and wants identify.
 
 ## STEP 2: Load the widget
 
@@ -53,34 +53,34 @@ Quackback.init({ instanceUrl: process.env.NEXT_PUBLIC_QUACKBACK_URL })
 
 The widget must appear for anonymous visitors after `init`. Do not gate the snippet on login.
 
+If the user did not provide a signing secret, stop here after verifying the launcher. Identify is optional.
+
 ## STEP 3: Identify signed-in users
+
+Skip this step unless the user wants signed-in attribution **and** provided a signing secret from Admin → Settings → Widget → Install.
 
 Read [references/identify-users.md](references/identify-users.md) now. Then implement it.
 
-Identify is required for signed-in users. Anonymous visitors need no identify call.
+Anonymous visitors need no identify call.
 
-1. Add a **server-only** route that reads the host session, signs a short-lived HS256 JWT with `QUACKBACK_WIDGET_SECRET`, and returns `{ ssoToken }`.
-2. Call identify as soon as the host knows who the user is: when the app first loads if they are already signed in, and immediately after login or signup. Once per session — not on every client navigation.
-3. If the user is already known at init time, pass `{ ssoToken }` as `identity` on `init` instead of a separate identify call.
-4. Call `Quackback("logout")` from the host logout handler. Always, even if you do not expect a shared computer.
+1. Add a **server-only** route that reads the host session, signs a short-lived HS256 JWT with the signing secret, and returns `{ ssoToken }`.
+2. Store the secret in the host app's server-side secret store. It is not a Quackback setting.
+3. Call identify as soon as the host knows who the user is: when the app first loads if they are already signed in, and immediately after login or signup. Once per session — not on every client navigation.
+4. If the user is already known at init time, pass `{ ssoToken }` as `identity` on `init` instead of a separate identify call.
+5. Call `Quackback("logout")` from the host logout handler. Always, even if you do not expect a shared computer.
 
 Do not call `Quackback("identify", { id, email })`. That unverified shape is rejected.
 
 ## STEP 4: Store credentials
 
-If valid values already exist in `.env` / `.env.local`, leave them. Otherwise write:
+If a public instance URL env var already exists (`NEXT_PUBLIC_*` / `VITE_*`), leave it. Write a server-only secret only when implementing identify.
 
-- `QUACKBACK_WIDGET_SECRET` — server-only
-- A public env var for the instance URL if the client needs it (`NEXT_PUBLIC_*` / `VITE_*` for the URL only)
-
-Never put the secret in public env vars, the snippet, or client bundles.
+Never put the signing secret in public env vars, the snippet, or client bundles.
 
 ## STEP 5: Verify
 
 - Widget launcher appears on a logged-out page.
-- After login (or on an already-authenticated load), the server route returns `{ ssoToken }` and the client identifies once.
-- Logout clears identity; the launcher stays.
-- Secret is not in the client bundle.
+- If identify was implemented: after login (or on an already-authenticated load), the server route returns `{ ssoToken }` and the client identifies once. Logout clears identity; the launcher stays. Secret is not in the client bundle.
 
 ## Rules
 
