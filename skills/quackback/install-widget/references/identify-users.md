@@ -34,7 +34,7 @@ Your backend signs an HS256 JWT with the signing secret from Admin → Settings 
 | `sub` | yes | Stable host user id (database id). Unique string. Not email. |
 | `email` | yes | Person property for notifications and dedup. |
 | `name` | no | Display name. Pass it when you have it. |
-| `exp` | yes | ~5 minutes from now. |
+| `exp` | recommended | ~5 minutes from now. |
 
 `sub` is the durable id. Email can change; `sub` must not. Never use `null`, `undefined`, `true`, `"anonymous"`, or a shared placeholder as `sub` — two users with the same `sub` are merged.
 
