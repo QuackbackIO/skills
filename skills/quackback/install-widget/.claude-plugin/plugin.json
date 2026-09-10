@@ -1,6 +1,6 @@
 {
   "name": "install-widget",
-  "description": "Install the Quackback widget in a host app and identify signed-in users with a verified token.",
+  "description": "Install the Quackback widget. Identify signed-in users only when the user provides the signing secret from Admin → Settings → Widget → Install.",
   "version": "1.0.0",
   "author": { "name": "Quackback" },
   "keywords": ["quackback", "widget", "install", "identify"]

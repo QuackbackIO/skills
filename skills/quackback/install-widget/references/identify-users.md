@@ -100,4 +100,4 @@ The launcher stays. A later identify replaces the previous identity; still call 
 - Identify on every route change.
 - Identify only at signup and never again on later visits — call it on each authenticated app load.
 - Invent a second identity API.
-- Invent a signing secret or look for a Quackback `QUACKBACK_WIDGET_SECRET` environment variable.
+- Invent a signing secret, or search Cloud / self-host / host env for a Quackback-provided signing secret. Quackback never injects one. If you need identify, copy the secret from Admin → Settings → Widget → Install.

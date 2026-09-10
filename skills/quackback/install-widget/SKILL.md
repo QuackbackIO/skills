@@ -16,7 +16,7 @@ Credentials come from the user or from Admin → Settings → Widget → Install
 - Instance URL (example: `https://feedback.example.com`)
 - Signing secret (optional) — only if the user wants signed-in identify. Server-only. Never commit it or ship it to the browser.
 
-The launcher does not need a signing secret. If the user did not give a signing secret, finish after `init` and do not invent one. Do not treat a missing secret as a Quackback Cloud or self-host environment variable.
+The launcher does not need a signing secret. If the user did not paste one from Admin → Settings → Widget → Install, finish after init. Do not invent a secret and do not search Cloud, self-host, or host env for a Quackback-provided one.
 
 ## STEP 1: Detect the stack
 
@@ -73,7 +73,7 @@ Do not call `Quackback("identify", { id, email })`. That unverified shape is rej
 
 ## STEP 4: Store credentials
 
-If a public instance URL env var already exists (`NEXT_PUBLIC_*` / `VITE_*`), leave it. Write a server-only secret only when implementing identify.
+If a public instance URL env var already exists (`NEXT_PUBLIC_*` / `VITE_*`), leave it. Only when implementing identify: paste the Admin → Settings → Widget → Install secret into the host app’s server-side secret store. Do not look for a Quackback-provided env var.
 
 Never put the signing secret in public env vars, the snippet, or client bundles.
 
