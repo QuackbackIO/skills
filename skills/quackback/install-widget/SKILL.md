@@ -41,6 +41,8 @@ If there is no pairing code and no signing secret yet, ask the user to copy the 
 
 Initialize once, in the root layout / app shell — the same place other third-party scripts load. Not on a single page.
 
+If valid values already exist in `.env` / `.env.local`, leave them. Otherwise, when the client needs the instance URL, write a public env var for the URL only (`NEXT_PUBLIC_*` / `VITE_*`). The signing secret is already in server-only env from STEP 2.
+
 **HTML / any site** — paste before `</body>`:
 
 ```html
@@ -83,16 +85,7 @@ When you do implement identify:
 
 Do not call `Quackback("identify", { id, email })`. That unverified shape is rejected.
 
-## STEP 5: Store credentials
-
-If valid values already exist in `.env` / `.env.local`, leave them. Otherwise:
-
-- A public env var for the instance URL if the client needs it (`NEXT_PUBLIC_*` / `VITE_*` for the URL only)
-- The signing secret — **server-only**, host app only, any name
-
-Never put the signing secret in public env vars, the snippet, or client bundles. Never set it on Quackback Cloud or the Quackback instance.
-
-## STEP 6: Verify
+## STEP 5: Verify
 
 - Open a page with the snippet. The Install page in Quackback should flip to connected.
 - Widget launcher appears on a logged-out page (Show on your website must be on).
