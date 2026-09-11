@@ -8,19 +8,9 @@ Only implement this file when the host already has login, a session, or a curren
 
 ## Signing secret
 
-The signing secret lives in the **host app** server environment (any name). It is not a Quackback Cloud or Quackback-host env var.
+Use the server-only host env var written in STEP 2. It is not a Quackback Cloud or Quackback-host env var.
 
-Get it by:
-
-1. Redeeming a pairing code from the copied install prompt:
-
-   `POST {instanceUrl}/api/widget/install-context` with `{ "code": "<pairing code>" }`.
-
-   Write `signingSecret` from the JSON response to a server-only host env var. Never print it.
-
-2. Or copying it from Admin → Settings → Widget → Install (Reveal / Copy).
-
-Never invent a secret. Never put it in client code, public env vars, commits, or logs. Do not search Cloud, self-host, or host env for a Quackback-provided one — Quackback never injects one.
+If you reached this file without a pairing flow, Reveal / Copy the secret on Admin → Settings → Widget → Install. Never invent a secret. Never put it in client code, public env vars, commits, or logs. Do not search Cloud, self-host, or host env for a Quackback-provided one — Quackback never injects one.
 
 ## When to identify
 
