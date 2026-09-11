@@ -1,10 +1,26 @@
 # Identify users
 
-The widget works anonymously after `init`. Identify is optional. Use it when the user wants signed-in activity to attach to a real customer.
+The widget works anonymously after `init`. Identify links that anonymous session to a real customer as soon as the host app knows who they are.
 
-If the user did not provide a signing secret from Admin → Settings → Widget → Install, do not implement identify and do not invent a secret.
+Anonymous activity from before login moves onto the identified user automatically. Do not wait for the user to open the widget. Do not skip identify because the launcher already appears.
 
-Anonymous activity from before login moves onto the identified user automatically. Do not wait for the user to open the widget.
+Only implement this file when the host already has login, a session, or a current-user helper. If it does not, leave the signing secret in server-only env and stop. Do not invent auth.
+
+## Signing secret
+
+The signing secret lives in the **host app** server environment (any name). It is not a Quackback Cloud or Quackback-host env var.
+
+Get it by:
+
+1. Redeeming a pairing code from the copied install prompt:
+
+   `POST {instanceUrl}/api/widget/install-context` with `{ "code": "<pairing code>" }`.
+
+   Write `signingSecret` from the JSON response to a server-only host env var. Never print it.
+
+2. Or copying it from Admin → Settings → Widget → Install (Reveal / Copy).
+
+Never invent a secret. Never put it in client code, public env vars, commits, or logs. Do not search Cloud, self-host, or host env for a Quackback-provided one — Quackback never injects one.
 
 ## When to identify
 
@@ -27,14 +43,14 @@ Quackback('init', { identity: { ssoToken } })
 
 Identify is verified-only. The browser must not pass raw `id` or `email`.
 
-Your backend signs an HS256 JWT with the signing secret from Admin → Settings → Widget → Install and returns `{ ssoToken }`. Store that secret in the host app server-side secret store (example: `WIDGET_SIGNING_SECRET`). It is not a Quackback Cloud or self-host environment variable.
+Your backend signs an HS256 JWT with the host-app signing secret and returns `{ ssoToken }`. Store that secret in the host app server-side secret store (example: `WIDGET_SIGNING_SECRET`). It is not a Quackback Cloud or self-host environment variable.
 
 | Claim | Required | Role |
 | --- | --- | --- |
 | `sub` | yes | Stable host user id (database id). Unique string. Not email. |
 | `email` | yes | Person property for notifications and dedup. |
 | `name` | no | Display name. Pass it when you have it. |
-| `exp` | recommended | ~5 minutes from now. |
+| `exp` | yes | ~5 minutes from now. |
 
 `sub` is the durable id. Email can change; `sub` must not. Never use `null`, `undefined`, `true`, `"anonymous"`, or a shared placeholder as `sub` — two users with the same `sub` are merged.
 
@@ -47,6 +63,7 @@ Reuse the host session. Return 401 when nobody is signed in — the client then 
 ```ts
 import { SignJWT } from 'jose'
 
+// Host app server env, any name — not a Quackback-host variable.
 const secret = new TextEncoder().encode(process.env.WIDGET_SIGNING_SECRET)
 
 export async function GET(request: Request) {
@@ -94,10 +111,11 @@ The launcher stays. A later identify replaces the previous identity; still call 
 
 ## Do not
 
-- Put the signing secret in client code.
+- Put the signing secret in client code or a Quackback-host env file.
 - Call `Quackback("identify", { id, email })`.
 - Use email, `null`, or a generic string as `sub`.
 - Identify on every route change.
 - Identify only at signup and never again on later visits — call it on each authenticated app load.
 - Invent a second identity API.
-- Invent a signing secret, or search Cloud / self-host / host env for a Quackback-provided signing secret. Quackback never injects one. If you need identify, copy the secret from Admin → Settings → Widget → Install.
+- Invent a signing secret or pairing code, or search Cloud / self-host / host env for a Quackback-provided signing secret.
+- Invent auth or a placeholder user so you can "finish" identify on a logged-out-only site.
